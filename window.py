@@ -110,7 +110,8 @@ class AStarSimulator:
         a_start_solutions = list( # Filter for solutions with minimal cost
             filter(lambda alg_result: alg_result[2] == min_distance, a_start_solutions)
         )
-
+        
+        # Loop through solution paths
         for solution in a_start_solutions:
             path, explored, _ = solution
             start_point = path[0]
