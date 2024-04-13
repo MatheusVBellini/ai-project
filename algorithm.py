@@ -54,7 +54,11 @@ def a_star(start, end, grid):
                 path.append(current_cell.pos)
                 cost = cost + current_cell.g
                 current_cell = current_cell.parent
-            return path[::-1], explored, cost  # Return (reversed path, explored nodes, path cost)
+            return (
+                path[::-1],
+                explored,
+                cost,
+            )  # Return (reversed path, explored nodes, path cost)
 
         # Generate neighboors of current node
         for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
