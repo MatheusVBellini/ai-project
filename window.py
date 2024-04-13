@@ -98,24 +98,31 @@ class AStarSimulator:
         ]
 
         # Chamar o algoritmo A*
-        start_point = list(self.start_points)[0]
-        alg_result = a_star(start_point, self.end_point, grid)
+        for start_point in self.start_points:
+            alg_result = a_star(start_point, self.end_point, grid)
 
-        path, explored = alg_result
+            path, explored = alg_result
 
-        # Atualizar a interface gráfica com os nós explorados
-        for position in explored:
-            if position != start_point and position != self.end_point:
-                self.cells[position].config(bg="lightgray")
+            # Atualizar a interface gráfica com os nós explorados
+            for position in explored:
+                curr_cell = self.cells[position]
+                if position not in (start_point, self.end_point) and curr_cell[
+                    "bg"
+                ] not in ("blue", "green"):
+                    curr_cell.config(bg="lightgray")
 
-        if path is None:
-            print("Não foi possível encontrar um caminho.")
-            return
+            if path is None:
+                print("Não foi possível encontrar um caminho.")
+                return
 
-        # Atualizar a interface gráfica com o caminho encontrado
-        for position in path:
-            if position != start_point and position != self.end_point:
-                self.cells[position].config(bg="blue")
+            # Atualizar a interface gráfica com o caminho encontrado
+            for position in path:
+                curr_cell = self.cells[position]
+                if (
+                    position not in (start_point, self.end_point)
+                    and curr_cell["bg"] != "green"
+                ):
+                    curr_cell.config(bg="blue")
 
     def clear_path(self, event=None):
         for (i, j), cell in self.cells.items():
