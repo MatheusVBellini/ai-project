@@ -103,8 +103,11 @@ class AStarSimulator:
         for start_point in self.start_points:
             alg_result = a_star(start_point, self.end_point, grid)
             a_start_solutions.append(alg_result)
-        min_distance = min(alg_result[2] for alg_result in a_start_solutions)
-        a_start_solutions = list(
+        a_start_solutions = list( # Throw away empty solution
+            filter(lambda alg_result: alg_result[2] is not None, a_start_solutions)
+        )
+        min_distance = min(alg_result[2] for alg_result in a_start_solutions) # Find minimum cost
+        a_start_solutions = list( # Filter for solutions with minimal cost
             filter(lambda alg_result: alg_result[2] == min_distance, a_start_solutions)
         )
 
