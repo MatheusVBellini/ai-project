@@ -9,7 +9,7 @@ class AStarSimulator:
 
         self.grid_size = grid_size
         self.cells = {}
-        self.start_point = None
+        self.start_points = set()
         self.end_point = None
         self.obstacles = set()
         self.setup_grid()
@@ -59,12 +59,13 @@ class AStarSimulator:
         return handler
 
     def set_start(self, i, j):
-        if self.start_point:
-            self.cells[self.start_point].config(bg="white")
-        self.clear_path()
-
-        self.start_point = (i, j)
-        self.cells[(i, j)].config(bg="green")
+        if (i, j) in self.start_points:
+            self.cells[(i, j)].config(bg="white")
+            self.start_points.remove((i, j))
+            self.clear_path()
+        else:
+            self.cells[(i, j)].config(bg="green")
+            self.start_points.add((i, j))
 
     def set_end(self, i, j):
         if self.end_point:
@@ -83,7 +84,7 @@ class AStarSimulator:
             self.obstacles.add((i, j))
 
     def start_search(self, event=None):
-        if self.start_point is None or self.end_point is None:
+        if self.start_points is None or self.end_point is None:
             print("Ponto de início ou fim não definido!")
             return
 
@@ -97,13 +98,14 @@ class AStarSimulator:
         ]
 
         # Chamar o algoritmo A*
-        alg_result = a_star(self.start_point, self.end_point, grid)
+        start_point = list(self.start_points)[0]
+        alg_result = a_star(start_point, self.end_point, grid)
 
         path, explored = alg_result
 
         # Atualizar a interface gráfica com os nós explorados
         for position in explored:
-            if position != self.start_point and position != self.end_point:
+            if position != start_point and position != self.end_point:
                 self.cells[position].config(bg="lightgray")
 
         if path is None:
@@ -112,14 +114,14 @@ class AStarSimulator:
 
         # Atualizar a interface gráfica com o caminho encontrado
         for position in path:
-            if position != self.start_point and position != self.end_point:
+            if position != start_point and position != self.end_point:
                 self.cells[position].config(bg="blue")
 
     def clear_path(self, event=None):
         for (i, j), cell in self.cells.items():
             if (
                 (i, j) not in self.obstacles
-                and (i, j) != self.start_point
+                and (i, j) not in self.start_points
                 and (i, j) != self.end_point
             ):
                 cell.config(bg="white")
@@ -127,6 +129,6 @@ class AStarSimulator:
     def clear_grid(self, event=None):
         for cell in self.cells.values():
             cell.config(bg="white")
-        self.start_point = None
+        self.start_points.clear()
         self.end_point = None
         self.obstacles.clear()
