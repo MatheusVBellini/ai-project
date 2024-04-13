@@ -63,24 +63,26 @@ class AStarSimulator:
             self.cells[(i, j)].config(bg="white")
             self.start_points.remove((i, j))
             self.clear_path()
-        elif (i, j) != self.end_point:
+        elif (i, j) != self.end_point and (i, j) not in self.obstacles:
             self.cells[(i, j)].config(bg="green")
             self.start_points.add((i, j))
 
     def set_end(self, i, j):
+        if (i,j) in self.start_points or (i,j) in self.obstacles or self.end_point == (i,j):
+            return
         if self.end_point:
             self.cells[self.end_point].config(bg="white")
             self.end_point = None
             self.clear_path()
-        elif (i, j) not in self.start_points:
-            self.end_point = (i, j)
-            self.cells[(i, j)].config(bg="red")
+
+        self.end_point = (i, j)
+        self.cells[(i, j)].config(bg="red")
 
     def set_obstacle(self, i, j):
         if (i, j) in self.obstacles:
             self.cells[(i, j)].config(bg="white")
             self.obstacles.remove((i, j))
-        else:
+        elif (i, j) != self.end_point and (i, j) not in self.start_points:
             self.cells[(i, j)].config(bg="black")
             self.obstacles.add((i, j))
 
