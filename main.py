@@ -1,5 +1,5 @@
-from window import AStarSimulator
 import tkinter as tk
+from window import AStarSimulator
 
 
 def main():

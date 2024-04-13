@@ -5,7 +5,7 @@ from algorithm import a_star
 class AStarSimulator:
     def __init__(self, master, grid_size=10):
         self.master = master
-        master.title("Simulador A*")
+        master.title("Ambulances")
 
         self.grid_size = grid_size
         self.cells = {}
@@ -31,7 +31,7 @@ class AStarSimulator:
                 cell.bind("<Button-1>", self.on_left_click(i, j))
                 cell.bind(
                     "<Button-2>", self.on_middle_click(i, j)
-                )  # Para usuários de Mac, isso pode precisar ser alterado para <Button-3>
+                )  # For mac users, this must be <Button-3>
                 cell.bind("<Button-3>", self.on_right_click(i, j))
                 self.cells[(i, j)] = cell
 
@@ -88,22 +88,30 @@ class AStarSimulator:
             print("Ponto de início ou fim não definido!")
             return
 
-        # Limpar o grid, mas manter pontos de início, fim e obstáculos
+        # Clean the grid maintaining start, end and obstacle points
         self.clear_path()
 
-        # Preparar o grid para o algoritmo A*
+        # Prepare the grid to apply A*
         grid = [
             [0 if (i, j) not in self.obstacles else 1 for j in range(self.grid_size)]
             for i in range(self.grid_size)
         ]
 
-        # Chamar o algoritmo A*
+        # Gather least distance initial nodes
+        a_start_solutions = []
         for start_point in self.start_points:
             alg_result = a_star(start_point, self.end_point, grid)
+            a_start_solutions.append(alg_result)
+        min_distance = min(alg_result[2] for alg_result in a_start_solutions)
+        a_start_solutions = list(
+            filter(lambda alg_result: alg_result[2] == min_distance, a_start_solutions)
+        )
 
-            path, explored = alg_result
+        for solution in a_start_solutions:
+            path, explored, _ = solution
+            start_point = path[0]
 
-            # Atualizar a interface gráfica com os nós explorados
+            # Update grid with visited nodes
             for position in explored:
                 curr_cell = self.cells[position]
                 if position not in (start_point, self.end_point) and curr_cell[
@@ -115,7 +123,7 @@ class AStarSimulator:
                 print("Não foi possível encontrar um caminho.")
                 return
 
-            # Atualizar a interface gráfica com o caminho encontrado
+            # Update grid with the found path
             for position in path:
                 curr_cell = self.cells[position]
                 if (
