@@ -1,6 +1,7 @@
 from window import AStarSimulator
 import tkinter as tk
 
+
 def main():
     root = tk.Tk()
 
@@ -8,5 +9,6 @@ def main():
     AStarSimulator(root, grid_size=grid_size)
     root.mainloop()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
