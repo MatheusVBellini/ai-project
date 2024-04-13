@@ -97,11 +97,19 @@ class AStarSimulator:
             for i in range(self.grid_size)
         ]
 
-        # Call A* for each starting point
+        # Gather least distance initial nodes
+        a_start_solutions = []
         for start_point in self.start_points:
             alg_result = a_star(start_point, self.end_point, grid)
+            a_start_solutions.append(alg_result)
+        min_distance = min(alg_result[2] for alg_result in a_start_solutions)
+        a_start_solutions = list(
+            filter(lambda alg_result: alg_result[2] == min_distance, a_start_solutions)
+        )
 
-            path, explored = alg_result
+        for solution in a_start_solutions:
+            path, explored, _ = solution
+            start_point = path[0]
 
             # Update grid with visited nodes
             for position in explored:

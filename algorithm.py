@@ -49,10 +49,12 @@ def a_star(start, end, grid):
         # Check if reached objective
         if current_cell == end_cell:
             path = []
+            cost = 0
             while current_cell:
                 path.append(current_cell.pos)
+                cost = cost + current_cell.g
                 current_cell = current_cell.parent
-            return path[::-1], explored  # Return reversed path
+            return path[::-1], explored, cost  # Return (reversed path, explored nodes, path cost)
 
         # Generate neighboors of current node
         for new_position in [(0, -1), (0, 1), (-1, 0), (1, 0)]:
@@ -87,4 +89,4 @@ def a_star(start, end, grid):
                 ):
                     heapq.heappush(open_list, new_cell)
 
-    return None, explored  # if no path found
+    return None, explored, None  # if no path found
