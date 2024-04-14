@@ -1,9 +1,9 @@
-MAIN=main.py
-TEST=test_alg.py
-SOURCES=*.py
+MAIN=src/main.py
+TEST=test/test_alg.py
+SOURCES=src/*.py
 
 all:
-	python3 main.py 
+	python3 $(MAIN) 
 
 install:
 	pip install --upgrade pip &&\
