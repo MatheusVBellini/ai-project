@@ -16,6 +16,7 @@ mkShell {
     pylint
     tkinter
     tomlkit
+    imageio
   ];
 }
 

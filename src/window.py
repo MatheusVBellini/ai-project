@@ -1,9 +1,11 @@
 import tkinter as tk
+from tkinter import ttk
 from algorithm import a_star
-
+import map_gen
+import os
 
 class AStarSimulator:
-    def __init__(self, master, grid_size=10):
+    def __init__(self, master, grid_size=10, tile_size=5):
         self.master = master
         master.title("Ambulances")
 
@@ -14,6 +16,11 @@ class AStarSimulator:
         self.obstacles = set()
         self.setup_grid()
         self.setup_keybindings()
+
+        self.map_generator = None
+        self.tile_size = tile_size
+        self.seed = 0
+        self.setup_map_gen_ui()
 
     def setup_grid(self):
         for i in range(self.grid_size):
@@ -39,7 +46,41 @@ class AStarSimulator:
         self.master.bind("<Return>", self.start_search)
         self.master.bind("<BackSpace>", self.clear_grid)
         self.master.bind("<Escape>", lambda event: self.master.destroy())
+    
+    def setup_map_gen_ui(self):
 
+        frame = tk.Frame(master=self.master, relief=tk.RAISED, borderwidth=0)
+        screen_height = self.master.winfo_screenheight()
+        label_size = 20
+        cell_height = int(screen_height / label_size / (self.grid_size + 1))
+        cell_width = int(cell_height * 2.5)
+        frame.grid(row=self.grid_size, column=0, columnspan=self.grid_size)
+        
+        load_tiles_button = ttk.Button(
+            frame,
+            text='Load Tiles',
+            command=lambda: self.load_tiles('tiles')
+        )
+        load_tiles_button.grid(column=0, row=0, sticky=tk.E, padx=5, pady=5)
+        generate_map_button = ttk.Button(
+            frame,
+            text='Generate Map',
+            command=lambda: self.generate_map()
+        )
+        generate_map_button.grid(column=1, row=0, sticky=tk.E, padx=5, pady=5)
+        seed_entry = ttk.Entry(
+            frame,
+            textvariable = "0"
+        )
+        seed_entry.grid(column=2, row=0, sticky=tk.E, padx=5, pady=5)
+        seed_set_button = ttk.Button(
+            frame,
+            text='Set Seed',
+            command=lambda: self.set_seed(int(seed_entry.get()))
+        )
+        seed_set_button.grid(column=3, row=0, sticky=tk.E, padx=5, pady=5)
+
+    
     def on_left_click(self, i, j):
         def handler(event):
             self.set_start(i, j)
@@ -57,6 +98,37 @@ class AStarSimulator:
             self.set_end(i, j)
 
         return handler
+    
+    # map generation ---
+    def load_tiles(self, directory): # loads the tile files
+        tiles = []
+        for filename in os.listdir(directory):
+            if filename.endswith(".jpg"):
+                f = os.path.join(directory, filename)
+                tiles.append(map_gen.Tile.from_file(f))
+        map_tiles_size = int(self.grid_size / self.tile_size); 
+        self.map_generator = map_gen.MapGenerator(tiles, map_tiles_size, map_tiles_size)
+        print(f'loaded tiles from {directory}!')
+
+    def set_seed(self, seed):
+        print(f'seed set to {seed}')
+        self.seed = seed
+
+    def generate_map(self):
+        print(f'generating map with seed {self.seed}...')
+        generated_map = self.map_generator.generate_map(self.seed)
+        print('map generated! applying to ui...')
+        for i in range(self.grid_size):
+            for j in range(self.grid_size):
+                value = generated_map[i][j]
+                if value == 0 and (i, j) in self.obstacles:
+                        self.cells[(i, j)].config(bg="white")
+                        self.obstacles.remove((i, j))
+                elif value == 1 and (i, j) != self.end_point and (i, j) not in self.start_points:
+                    self.cells[(i, j)].config(bg="black")
+                    self.obstacles.add((i, j))
+        print('done!')
+    # ---
 
     def set_start(self, i, j):
         if (i, j) in self.start_points:
@@ -66,7 +138,7 @@ class AStarSimulator:
         elif (i, j) != self.end_point and (i, j) not in self.obstacles:
             self.cells[(i, j)].config(bg="green")
             self.start_points.add((i, j))
-
+    
     def set_end(self, i, j):
         if (i,j) in self.start_points or (i,j) in self.obstacles or self.end_point == (i,j):
             return
