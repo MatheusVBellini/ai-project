@@ -1,12 +1,12 @@
 # python files
-*/__pycache__
-*/.env
-*/.venv
+__pycache__/
+.env/
+.venv/
 
 # git files
-*/.gitkeep
+.gitkeep
 
 # nix files
-*/flake.nix
-*/flake.lock
-*/nix
+flake.nix
+flake.lock
+nix/
