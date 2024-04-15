@@ -3,6 +3,9 @@
 */.env
 */.venv
 
+# git files
+*/.gitkeep
+
 # nix files
 */flake.nix
 */flake.lock

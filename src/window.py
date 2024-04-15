@@ -4,6 +4,7 @@ from algorithm import a_star
 import map_gen
 import os
 
+
 class AStarSimulator:
     def __init__(self, master, grid_size=10, tile_size=5):
         self.master = master
@@ -46,7 +47,7 @@ class AStarSimulator:
         self.master.bind("<Return>", self.start_search)
         self.master.bind("<BackSpace>", self.clear_grid)
         self.master.bind("<Escape>", lambda event: self.master.destroy())
-    
+
     def setup_map_gen_ui(self):
 
         frame = tk.Frame(master=self.master, relief=tk.RAISED, borderwidth=0)
@@ -55,32 +56,22 @@ class AStarSimulator:
         cell_height = int(screen_height / label_size / (self.grid_size + 1))
         cell_width = int(cell_height * 2.5)
         frame.grid(row=self.grid_size, column=0, columnspan=self.grid_size)
-        
+
         load_tiles_button = ttk.Button(
-            frame,
-            text='Load Tiles',
-            command=lambda: self.load_tiles('tiles')
+            frame, text="Load Tiles", command=lambda: self.load_tiles("tiles")
         )
         load_tiles_button.grid(column=0, row=0, sticky=tk.E, padx=5, pady=5)
         generate_map_button = ttk.Button(
-            frame,
-            text='Generate Map',
-            command=lambda: self.generate_map()
+            frame, text="Generate Map", command=lambda: self.generate_map()
         )
         generate_map_button.grid(column=1, row=0, sticky=tk.E, padx=5, pady=5)
-        seed_entry = ttk.Entry(
-            frame,
-            textvariable = "0"
-        )
+        seed_entry = ttk.Entry(frame, textvariable="0")
         seed_entry.grid(column=2, row=0, sticky=tk.E, padx=5, pady=5)
         seed_set_button = ttk.Button(
-            frame,
-            text='Set Seed',
-            command=lambda: self.set_seed(int(seed_entry.get()))
+            frame, text="Set Seed", command=lambda: self.set_seed(int(seed_entry.get()))
         )
         seed_set_button.grid(column=3, row=0, sticky=tk.E, padx=5, pady=5)
 
-    
     def on_left_click(self, i, j):
         def handler(event):
             self.set_start(i, j)
@@ -98,36 +89,41 @@ class AStarSimulator:
             self.set_end(i, j)
 
         return handler
-    
+
     # map generation ---
-    def load_tiles(self, directory): # loads the tile files
+    def load_tiles(self, directory):  # loads the tile files
         tiles = []
         for filename in os.listdir(directory):
             if filename.endswith(".jpg"):
                 f = os.path.join(directory, filename)
                 tiles.append(map_gen.Tile.from_file(f))
-        map_tiles_size = int(self.grid_size / self.tile_size); 
+        map_tiles_size = int(self.grid_size / self.tile_size)
         self.map_generator = map_gen.MapGenerator(tiles, map_tiles_size, map_tiles_size)
-        print(f'loaded tiles from {directory}!')
+        print(f"loaded tiles from {directory}!")
 
     def set_seed(self, seed):
-        print(f'seed set to {seed}')
+        print(f"seed set to {seed}")
         self.seed = seed
 
     def generate_map(self):
-        print(f'generating map with seed {self.seed}...')
+        print(f"generating map with seed {self.seed}...")
         generated_map = self.map_generator.generate_map(self.seed)
-        print('map generated! applying to ui...')
+        print("map generated! applying to ui...")
         for i in range(self.grid_size):
             for j in range(self.grid_size):
                 value = generated_map[i][j]
                 if value == 0 and (i, j) in self.obstacles:
-                        self.cells[(i, j)].config(bg="white")
-                        self.obstacles.remove((i, j))
-                elif value == 1 and (i, j) != self.end_point and (i, j) not in self.start_points:
+                    self.cells[(i, j)].config(bg="white")
+                    self.obstacles.remove((i, j))
+                elif (
+                    value == 1
+                    and (i, j) != self.end_point
+                    and (i, j) not in self.start_points
+                ):
                     self.cells[(i, j)].config(bg="black")
                     self.obstacles.add((i, j))
-        print('done!')
+        print("done!")
+
     # ---
 
     def set_start(self, i, j):
@@ -138,9 +134,13 @@ class AStarSimulator:
         elif (i, j) != self.end_point and (i, j) not in self.obstacles:
             self.cells[(i, j)].config(bg="green")
             self.start_points.add((i, j))
-    
+
     def set_end(self, i, j):
-        if (i,j) in self.start_points or (i,j) in self.obstacles or self.end_point == (i,j):
+        if (
+            (i, j) in self.start_points
+            or (i, j) in self.obstacles
+            or self.end_point == (i, j)
+        ):
             return
         if self.end_point:
             self.cells[self.end_point].config(bg="white")
@@ -177,14 +177,16 @@ class AStarSimulator:
         for start_point in self.start_points:
             alg_result = a_star(start_point, self.end_point, grid)
             a_start_solutions.append(alg_result)
-        a_start_solutions = list( # Throw away empty solution
+        a_start_solutions = list(  # Throw away empty solution
             filter(lambda alg_result: alg_result[2] is not None, a_start_solutions)
         )
-        min_distance = min(alg_result[2] for alg_result in a_start_solutions) # Find minimum cost
-        a_start_solutions = list( # Filter for solutions with minimal cost
+        min_distance = min(
+            alg_result[2] for alg_result in a_start_solutions
+        )  # Find minimum cost
+        a_start_solutions = list(  # Filter for solutions with minimal cost
             filter(lambda alg_result: alg_result[2] == min_distance, a_start_solutions)
         )
-        
+
         # Loop through solution paths
         for solution in a_start_solutions:
             path, explored, _ = solution
