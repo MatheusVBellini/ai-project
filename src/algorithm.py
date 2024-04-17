@@ -1,4 +1,5 @@
 import heapq
+from collections import deque
 
 # A* Algorithm
 # f(n) = g(n) + h(n)
@@ -26,7 +27,6 @@ class Cell:
 
     def __repr__(self):
         return f"Cell({self.pos}, {self.f})"
-
 
 def a_star(start, end, grid):
     start_cell = Cell(start)
@@ -94,3 +94,43 @@ def a_star(start, end, grid):
                     heapq.heappush(open_list, new_cell)
 
     return None, explored, None  # if no path found
+
+def bfs_path_to_end_using_cells(graph, start_pos, end_pos):
+    """
+    
+    Perform a breadth-first search using the Cell class for nodes.
+
+    Args:
+    graph (dict): A dictionary of positions to list of connected positions (adjacency list).
+    start_pos: The starting position (tuple) for the BFS.
+    end_pos: The ending position (tuple) where the search stops.
+
+    Returns:
+    list: A list representing the path from the start position to the end position using Cells, or None if no path is found.
+
+    """
+    start_cell = Cell(start_pos)
+    end_cell = Cell(end_pos)
+    queue = deque([start_cell])
+    visited = {start_cell.pos: start_cell}
+
+    while queue:
+        current_cell = queue.popleft()
+
+        if current_cell == end_cell:
+            # Reconstruct the path from end to start using parent links
+            path = []
+
+            while current_cell:
+                path.append(current_cell)
+                current_cell = current_cell.parent
+                
+            return path[::-1]  # Reverse to get path from start to end
+
+        for pos in graph[current_cell.pos]:
+            if pos not in visited:
+                neighbor_cell = Cell(pos, current_cell)
+                visited[pos] = neighbor_cell
+                queue.append(neighbor_cell)
+
+    return None  # If no path is found
