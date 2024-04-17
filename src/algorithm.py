@@ -95,42 +95,43 @@ def a_star(start, end, grid):
 
     return None, explored, None  # if no path found
 
-def bfs_path_to_end_using_cells(graph, start_pos, end_pos):
-    """
-    
-    Perform a breadth-first search using the Cell class for nodes.
+def bfs(start, ends, grid):
+    start_cell = Cell(start)
+    end_cells = set(ends)  # Using a set for quick lookup
 
-    Args:
-    graph (dict): A dictionary of positions to list of connected positions (adjacency list).
-    start_pos: The starting position (tuple) for the BFS.
-    end_pos: The ending position (tuple) where the search stops.
-
-    Returns:
-    list: A list representing the path from the start position to the end position using Cells, or None if no path is found.
-
-    """
-    start_cell = Cell(start_pos)
-    end_cell = Cell(end_pos)
     queue = deque([start_cell])
     visited = {start_cell.pos: start_cell}
+    explored = set()
+
+    directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]  # Right, Down, Left, Up
 
     while queue:
         current_cell = queue.popleft()
+        explored.add(current_cell.pos)  # Add to explored set
 
-        if current_cell == end_cell:
-            # Reconstruct the path from end to start using parent links
+        # Check if current cell is a target
+        if current_cell.pos in end_cells:
             path = []
+            path_cost = 0
 
             while current_cell:
-                path.append(current_cell)
+                path.append(current_cell.pos)
                 current_cell = current_cell.parent
+                path_cost += 1
+
+            return (path[::-1], explored, path_cost - 1)
+
+        x, y = current_cell.pos
+        
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            
+            if 0 <= nx < len(grid) and 0 <= ny < len(grid[0]) and not grid[nx][ny]:  # Updated condition here
+                neighbor_pos = (nx, ny)
                 
-            return path[::-1]  # Reverse to get path from start to end
+                if neighbor_pos not in visited:
+                    neighbor_cell = Cell(neighbor_pos, current_cell)
+                    visited[neighbor_pos] = neighbor_cell
+                    queue.append(neighbor_cell)
 
-        for pos in graph[current_cell.pos]:
-            if pos not in visited:
-                neighbor_cell = Cell(pos, current_cell)
-                visited[pos] = neighbor_cell
-                queue.append(neighbor_cell)
-
-    return None  # If no path is found
+    return (None, explored, None)  # if no path found to any end

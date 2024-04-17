@@ -1,12 +1,12 @@
 import tkinter as tk
-from window import AStarSimulator
+from window import searchSimulator
 
 
 def main():
     root = tk.Tk()
 
     grid_size = 20
-    AStarSimulator(root, grid_size=grid_size)
+    searchSimulator(root, grid_size=grid_size)
     root.mainloop()
 
 

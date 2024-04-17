@@ -1,11 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
-from algorithm import a_star
+from algorithm import a_star, bfs  # Assumindo que você tenha o método bfs disponível
 import map_gen
 import os
 
-
-class AStarSimulator:
+class searchSimulator:
     def __init__(self, master, grid_size=10, tile_size=5):
         self.master = master
         master.title("Ambulances")
@@ -22,7 +21,11 @@ class AStarSimulator:
         self.tile_size = tile_size
         self.seed = 0
         self.setup_map_gen_ui()
-
+        
+        # Inicializa com A* como o método de busca padrão
+        self.search_algorithm = 'A*'
+    
+    
     def setup_grid(self):
         for i in range(self.grid_size):
             for j in range(self.grid_size):
@@ -47,7 +50,14 @@ class AStarSimulator:
         self.master.bind("<Return>", self.start_search)
         self.master.bind("<BackSpace>", self.clear_grid)
         self.master.bind("<Escape>", lambda event: self.master.destroy())
+        self.master.bind("o", self.toggle_search_algorithm)
 
+    def toggle_search_algorithm(self, event):
+        if self.search_algorithm == 'A*':
+            self.search_algorithm = 'BFS'
+        else:
+            self.search_algorithm = 'A*'
+        print(f"Search Algorithm switched to: {self.search_algorithm}")
     def setup_map_gen_ui(self):
 
         frame = tk.Frame(master=self.master, relief=tk.RAISED, borderwidth=0)
@@ -157,7 +167,7 @@ class AStarSimulator:
         elif (i, j) != self.end_point and (i, j) not in self.start_points:
             self.cells[(i, j)].config(bg="black")
             self.obstacles.add((i, j))
-
+            
     def start_search(self, event=None):
         if self.start_points is None or self.end_point is None:
             print("Ponto de início ou fim não definido!")
@@ -166,38 +176,43 @@ class AStarSimulator:
         # Clean the grid maintaining start, end and obstacle points
         self.clear_path()
 
-        # Prepare the grid to apply A*
+        # Prepare the grid to apply search algorithm
         grid = [
             [0 if (i, j) not in self.obstacles else 1 for j in range(self.grid_size)]
             for i in range(self.grid_size)
         ]
 
         # Gather least distance initial nodes
-        a_start_solutions = []
-        for start_point in self.start_points:
-            alg_result = a_star(start_point, self.end_point, grid)
-            a_start_solutions.append(alg_result)
-        a_start_solutions = list(  # Throw away empty solution
-            filter(lambda alg_result: alg_result[2] is not None, a_start_solutions)
+        search_solutions = []
+        if self.search_algorithm == 'A*':
+            for start_point in self.start_points:
+                alg_result = a_star(start_point, self.end_point, grid)
+                search_solutions.append(alg_result)
+
+        else:
+            alg_result = bfs(self.end_point, self.start_points, grid)
+            search_solutions.append(alg_result)
+        
+        search_solutions = list(  # Throw away empty solution
+            filter(lambda alg_result: alg_result[2] is not None, search_solutions)
         )
+        
         min_distance = min(
-            alg_result[2] for alg_result in a_start_solutions
+            alg_result[2] for alg_result in search_solutions
         )  # Find minimum cost
-        a_start_solutions = list(  # Filter for solutions with minimal cost
-            filter(lambda alg_result: alg_result[2] == min_distance, a_start_solutions)
+        search_solutions = list(  # Filter for solutions with minimal cost
+            filter(lambda alg_result: alg_result[2] == min_distance, search_solutions)
         )
 
         # Loop through solution paths
-        for solution in a_start_solutions:
+        for solution in search_solutions:
             path, explored, _ = solution
             start_point = path[0]
 
             # Update grid with visited nodes
             for position in explored:
                 curr_cell = self.cells[position]
-                if position not in (start_point, self.end_point) and curr_cell[
-                    "bg"
-                ] not in ("blue", "green"):
+                if position not in (start_point, self.end_point) and curr_cell["bg"] not in ("blue", "green"):
                     curr_cell.config(bg="lightgray")
 
             if path is None:
@@ -207,12 +222,8 @@ class AStarSimulator:
             # Update grid with the found path
             for position in path:
                 curr_cell = self.cells[position]
-                if (
-                    position not in (start_point, self.end_point)
-                    and curr_cell["bg"] != "green"
-                ):
+                if (position not in (start_point, self.end_point) and curr_cell["bg"] != "green"):
                     curr_cell.config(bg="blue")
-
     def clear_path(self, event=None):
         for (i, j), cell in self.cells.items():
             if (
