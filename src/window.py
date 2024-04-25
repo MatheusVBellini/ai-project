@@ -3,6 +3,7 @@ from tkinter import ttk
 from algorithm import a_star, bfs  # Assumindo que você tenha o método bfs disponível
 import map_gen
 import os
+import time
 
 class searchSimulator:
     def __init__(self, master, grid_size=10, tile_size=5):
@@ -15,17 +16,16 @@ class searchSimulator:
         self.end_point = None
         self.obstacles = set()
         self.setup_grid()
-        self.setup_keybindings()
+
+        # Inicializa com A* como o método de busca padrão
+        self.search_algorithm = 'A*'
 
         self.map_generator = None
         self.tile_size = tile_size
         self.seed = 0
         self.setup_map_gen_ui()
-        
-        # Inicializa com A* como o método de busca padrão
-        self.search_algorithm = 'A*'
-    
-    
+
+
     def setup_grid(self):
         for i in range(self.grid_size):
             for j in range(self.grid_size):
@@ -46,41 +46,61 @@ class searchSimulator:
                 cell.bind("<Button-3>", self.on_right_click(i, j))
                 self.cells[(i, j)] = cell
 
-    def setup_keybindings(self):
-        self.master.bind("<Return>", self.start_search)
-        self.master.bind("<BackSpace>", self.clear_grid)
-        self.master.bind("<Escape>", lambda event: self.master.destroy())
-        self.master.bind("o", self.toggle_search_algorithm)
 
-    def toggle_search_algorithm(self, event):
+    def toggle_search_algorithm(self, text_var):
         if self.search_algorithm == 'A*':
             self.search_algorithm = 'BFS'
         else:
             self.search_algorithm = 'A*'
+
+        text_var.set(self.search_algorithm + " (Press 'o' to toggle)")
         print(f"Search Algorithm switched to: {self.search_algorithm}")
+
+
     def setup_map_gen_ui(self):
-
         frame = tk.Frame(master=self.master, relief=tk.RAISED, borderwidth=0)
-        screen_height = self.master.winfo_screenheight()
-        label_size = 20
-        cell_height = int(screen_height / label_size / (self.grid_size + 1))
-        cell_width = int(cell_height * 2.5)
-        frame.grid(row=self.grid_size, column=0, columnspan=self.grid_size)
 
-        load_tiles_button = ttk.Button(
-            frame, text="Load Tiles", command=lambda: self.load_tiles("tiles")
-        )
-        load_tiles_button.grid(column=0, row=0, sticky=tk.E, padx=5, pady=5)
-        generate_map_button = ttk.Button(
-            frame, text="Generate Map", command=lambda: self.generate_map()
-        )
-        generate_map_button.grid(column=1, row=0, sticky=tk.E, padx=5, pady=5)
-        seed_entry = ttk.Entry(frame, textvariable="0")
+        frame.grid(row=self.grid_size, column=0, columnspan=self.grid_size)
+        self.load_tiles("tiles")
+
+        seed_text = ttk.Label(frame, text="Map seed:")
+        seed_text.grid(column=1, row=0, sticky=tk.E, padx=5, pady=5)
+        seed_entry = ttk.Entry(frame)
         seed_entry.grid(column=2, row=0, sticky=tk.E, padx=5, pady=5)
-        seed_set_button = ttk.Button(
-            frame, text="Set Seed", command=lambda: self.set_seed(int(seed_entry.get()))
+        generate_button = ttk.Button(
+            frame, text="Generate", command=lambda: self.on_type_seed(seed_entry.get())
         )
-        seed_set_button.grid(column=3, row=0, sticky=tk.E, padx=5, pady=5)
+        generate_button.grid(column=3, row=0, sticky=tk.E, padx=5, pady=5)
+
+        search_method_text = ttk.Label(frame, text="Search Method:")
+        search_method_text.grid(column=1, row=1, sticky=tk.E, padx=5, pady=5)
+
+        text_var = tk.StringVar()
+        text_var.set(self.search_algorithm + " (Press 'o' to toggle)")
+        search_method_label = ttk.Label(frame, textvariable=text_var)
+        search_method_label.grid(column=2, row=1, sticky=tk.E, padx=5, pady=5)
+
+        self.master.bind("<Return>", self.search)
+        self.master.bind("<BackSpace>", self.clear_grid)
+        self.master.bind("<Escape>", lambda event: self.master.destroy())
+        self.master.bind("o", lambda event: self.toggle_search_algorithm(text_var))
+
+    def search(self, event=None):
+        # time the search
+        time_start = time.time()
+        self.start_search()
+        time_end = time.time()
+        print(f"Search {self.search_algorithm} took {time_end - time_start} seconds")
+
+    def on_type_seed(self, seed):
+        print(seed)
+
+        if not seed:
+            print("seed not set!")
+            return
+
+        self.set_seed(seed)
+        self.generate_map()
 
     def on_left_click(self, i, j):
         def handler(event):
@@ -112,11 +132,16 @@ class searchSimulator:
         print(f"loaded tiles from {directory}!")
 
     def set_seed(self, seed):
-        print(f"seed set to {seed}")
-        self.seed = seed
+        int_seed = int(seed)
+        print(f"seed set to {int_seed}")
+        self.seed = int_seed
 
     def generate_map(self):
         print(f"generating map with seed {self.seed}...")
+        if not self.map_generator or not self.seed:
+            print("tiles or seed not set!")
+            return
+
         generated_map = self.map_generator.generate_map(self.seed)
         print("map generated! applying to ui...")
         for i in range(self.grid_size):
@@ -167,7 +192,7 @@ class searchSimulator:
         elif (i, j) != self.end_point and (i, j) not in self.start_points:
             self.cells[(i, j)].config(bg="black")
             self.obstacles.add((i, j))
-            
+
     def start_search(self, event=None):
         if self.start_points is None or self.end_point is None:
             print("Ponto de início ou fim não definido!")
@@ -188,15 +213,14 @@ class searchSimulator:
             for start_point in self.start_points:
                 alg_result = a_star(start_point, self.end_point, grid)
                 search_solutions.append(alg_result)
-
         else:
             alg_result = bfs(self.end_point, self.start_points, grid)
             search_solutions.append(alg_result)
-        
+
         search_solutions = list(  # Throw away empty solution
             filter(lambda alg_result: alg_result[2] is not None, search_solutions)
         )
-        
+
         min_distance = min(
             alg_result[2] for alg_result in search_solutions
         )  # Find minimum cost
@@ -224,6 +248,7 @@ class searchSimulator:
                 curr_cell = self.cells[position]
                 if (position not in (start_point, self.end_point) and curr_cell["bg"] != "green"):
                     curr_cell.config(bg="blue")
+
     def clear_path(self, event=None):
         for (i, j), cell in self.cells.items():
             if (

@@ -38,11 +38,11 @@ class MapGenerator:
         # creates connections lookup table
         self.connections = {"N": dict(), "S": dict(), "E": dict(), "W": dict()}
         for i in range(len(tiles)):
-            print(f"tile={i}")
+            # print(f"tile={i}")
             tile = tiles[i]
             for direction in self.connections:
                 conn = tile.get_connection(direction)
-                print(f"\t{conn}({direction})")
+                # print(f"\t{conn}({direction})")
                 if conn not in self.connections[direction]:
                     self.connections[direction][conn] = []
                 self.connections[direction][conn].append(tile)
