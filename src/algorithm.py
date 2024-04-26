@@ -122,13 +122,13 @@ def bfs(start, ends, grid):
             return (path[::-1], explored, path_cost - 1)
 
         x, y = current_cell.pos
-        
+
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
-            
+
             if 0 <= nx < len(grid) and 0 <= ny < len(grid[0]) and not grid[nx][ny]:  # Updated condition here
                 neighbor_pos = (nx, ny)
-                
+
                 if neighbor_pos not in visited:
                     neighbor_cell = Cell(neighbor_pos, current_cell)
                     visited[neighbor_pos] = neighbor_cell

@@ -90,7 +90,7 @@ class searchSimulator:
         time_start = time.time()
         self.start_search()
         time_end = time.time()
-        print(f"Search {self.search_algorithm} took {time_end - time_start} seconds")
+        print(f"Search {self.search_algorithm} took {(time_end - time_start) * 1000}ms")
 
     def on_type_seed(self, seed):
         print(seed)
@@ -99,6 +99,7 @@ class searchSimulator:
             print("seed not set!")
             return
 
+        self.clear_grid()
         self.set_seed(seed)
         self.generate_map()
 
@@ -217,6 +218,11 @@ class searchSimulator:
             alg_result = bfs(self.end_point, self.start_points, grid)
             search_solutions.append(alg_result)
 
+        # sum all explored nodes from all solutions
+        explored_count = 0
+        for solution in search_solutions:
+            explored_count += len(solution[1])
+
         search_solutions = list(  # Throw away empty solution
             filter(lambda alg_result: alg_result[2] is not None, search_solutions)
         )
@@ -224,6 +230,7 @@ class searchSimulator:
         min_distance = min(
             alg_result[2] for alg_result in search_solutions
         )  # Find minimum cost
+
         search_solutions = list(  # Filter for solutions with minimal cost
             filter(lambda alg_result: alg_result[2] == min_distance, search_solutions)
         )
@@ -248,6 +255,8 @@ class searchSimulator:
                 curr_cell = self.cells[position]
                 if (position not in (start_point, self.end_point) and curr_cell["bg"] != "green"):
                     curr_cell.config(bg="blue")
+
+        print(f"Explorados: {explored_count}")
 
     def clear_path(self, event=None):
         for (i, j), cell in self.cells.items():
