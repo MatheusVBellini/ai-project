@@ -15,9 +15,33 @@ class searchSimulator:
         self.start_points = set()
         self.end_point = None
         self.obstacles = set()
-        self.setup_grid()
+        # apply the grid layout
+        master.grid_columnconfigure(0, weight=1)
+        master.grid_rowconfigure(0, weight=1)
+        
+        # create the text widget
+        canvas_frame = tk.Frame(master)
+        canvas_frame.grid(row=0, column=0, sticky=tk.EW)
+        grid_canvas = tk.Canvas(canvas_frame, width = 100, height = 10000)
+        grid_canvas.grid(row=0, column=0, sticky="news")
 
-        # Inicializa com A* como o método de busca padrão
+        self.grid_frame = tk.Frame(canvas_frame)
+        self.grid_frame.grid(row=0, column=0, sticky="news")
+        
+        # create a scrollbar widget and set its command to the text widget
+        scrollbary = ttk.Scrollbar(master, orient='vertical', command=grid_canvas.yview)
+        scrollbary.grid(row=0, column=1, sticky=tk.NS)
+        
+        #  communicate back to the scrollbar
+        grid_canvas['yscrollcommand'] = scrollbary.set
+        grid_canvas['yscrollincrement'] = 10
+
+
+        grid_canvas.create_window((0, 0), window=self.grid_frame, anchor='w')
+        self.setup_grid()
+        self.grid_frame.update_idletasks()
+
+       # Inicializa com A* como o método de busca padrão
         self.search_algorithm = 'A*'
 
         self.map_generator = None
@@ -29,10 +53,10 @@ class searchSimulator:
     def setup_grid(self):
         for i in range(self.grid_size):
             for j in range(self.grid_size):
-                frame = tk.Frame(master=self.master, relief=tk.RAISED, borderwidth=0)
+                frame = tk.Frame(master=self.grid_frame, relief=tk.RAISED, borderwidth=0)
                 frame.grid(row=i, column=j)
 
-                screen_height = self.master.winfo_screenheight()
+                screen_height = self.grid_frame.winfo_screenheight()
                 label_size = 20
                 height = int(screen_height / label_size / (self.grid_size + 1))
                 width = int(height * 2.5)
