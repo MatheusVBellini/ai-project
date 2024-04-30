@@ -15,31 +15,39 @@ class searchSimulator:
         self.start_points = set()
         self.end_point = None
         self.obstacles = set()
-        # apply the grid layout
+
+        # Configure the master to expand in all directions
         master.grid_columnconfigure(0, weight=1)
         master.grid_rowconfigure(0, weight=1)
-        
-        # create the text widget
-        canvas_frame = tk.Frame(master)
-        canvas_frame.grid(row=0, column=0, sticky=tk.EW)
-        grid_canvas = tk.Canvas(canvas_frame, width = 100, height = 10000)
-        grid_canvas.grid(row=0, column=0, sticky="news")
 
-        self.grid_frame = tk.Frame(canvas_frame)
-        self.grid_frame.grid(row=0, column=0, sticky="news")
-        
-        # create a scrollbar widget and set its command to the text widget
-        scrollbary = ttk.Scrollbar(master, orient='vertical', command=grid_canvas.yview)
-        scrollbary.grid(row=0, column=1, sticky=tk.NS)
-        
-        #  communicate back to the scrollbar
-        grid_canvas['yscrollcommand'] = scrollbary.set
-        grid_canvas['yscrollincrement'] = 10
+        # Create the canvas frame, which should expand in all directions
+        self.canvas_frame = tk.Frame(master)
+        self.canvas_frame.grid(row=0, column=0, sticky=tk.NSEW)
+        self.canvas_frame.grid_propagate(False)
 
+        # Create scrollbars
+        self.v_scroll = tk.Scrollbar(self.canvas_frame, orient=tk.VERTICAL)
+        self.v_scroll.grid(row=0, column=1, sticky='ns')
+        self.h_scroll = tk.Scrollbar(self.canvas_frame, orient=tk.HORIZONTAL)
+        self.h_scroll.grid(row=1, column=0, sticky='ew')
 
-        grid_canvas.create_window((0, 0), window=self.grid_frame, anchor='w')
+        # Create the grid canvas without setting width and height
+        self.grid_canvas = tk.Canvas(self.canvas_frame, yscrollcommand=self.v_scroll.set, xscrollcommand=self.h_scroll.set)
+        self.grid_canvas.grid(row=0, column=0, sticky=tk.NSEW)
+
+        # Configure scrollbars to scroll the canvas
+        self.v_scroll.config(command=self.grid_canvas.yview)
+        self.h_scroll.config(command=self.grid_canvas.xview)
+
+        # Set up a frame inside the canvas to contain the content
+        self.grid_frame = tk.Frame(self.grid_canvas)
+        self.canvas_window = self.grid_canvas.create_window((0, 0), window=self.grid_frame, anchor='nw')
+
+        # Bind the canvas to configure events to manage resizing and scrolling
+        self.canvas_frame.bind("<Configure>", self.on_resize)
+        self.grid_frame.bind("<Configure>", self.update_scrollregion)
+
         self.setup_grid()
-        self.grid_frame.update_idletasks()
 
        # Inicializa com A* como o método de busca padrão
         self.search_algorithm = 'A*'
@@ -49,19 +57,41 @@ class searchSimulator:
         self.seed = 0
         self.setup_map_gen_ui()
 
+    def toggle_fs(self, dummy=None):
+        state = False if self.master.attributes('-fullscreen') else True
+        self.master.attributes('-fullscreen', state)
+        if not state:
+            self.master.geometry('800x800+100+100')
+
+    def update_scrollregion(self, event):
+        # Update the scroll region to encompass the size of the grid_frame
+        self.grid_canvas.config(scrollregion=self.grid_canvas.bbox("all"))
+
+    def on_resize(self, event):
+        # Calculate the maximum size the canvas can be (square and fill available space)
+        size = min(event.width, event.height)
+        self.grid_canvas.config(width=size, height=size)
 
     def setup_grid(self):
+        screen_height = self.grid_frame.winfo_screenheight()
+        label_size = 20
+        height = int(screen_height / label_size / (self.grid_size + 1))
+        width = int(height * 2.5)
+
+        frame = self.grid_frame
+
         for i in range(self.grid_size):
             for j in range(self.grid_size):
-                frame = tk.Frame(master=self.grid_frame, relief=tk.RAISED, borderwidth=0)
-                frame.grid(row=i, column=j)
-
-                screen_height = self.grid_frame.winfo_screenheight()
-                label_size = 20
-                height = int(screen_height / label_size / (self.grid_size + 1))
-                width = int(height * 2.5)
-                cell = tk.Label(master=frame, bg="white", width=width, height=height)
-                cell.pack(padx=1, pady=1)
+                cell = tk.Label(
+                    frame,
+                    text="",
+                    width=width,
+                    height=height,
+                    relief="groove",
+                    borderwidth=1,
+                    bg="white",
+                )
+                cell.grid(row=i, column=j, sticky="news")
 
                 cell.bind("<Button-1>", self.on_left_click(i, j))
                 cell.bind(
@@ -82,7 +112,7 @@ class searchSimulator:
 
 
     def setup_map_gen_ui(self):
-        frame = tk.Frame(master=self.master, relief=tk.RAISED, borderwidth=0)
+        frame = tk.Frame(master=self.master)
 
         frame.grid(row=self.grid_size, column=0, columnspan=self.grid_size)
         self.load_tiles("tiles")
@@ -108,6 +138,7 @@ class searchSimulator:
         self.master.bind("<BackSpace>", self.clear_grid)
         self.master.bind("<Escape>", lambda event: self.master.destroy())
         self.master.bind("o", lambda event: self.toggle_search_algorithm(text_var))
+        self.master.bind("<F11>", self.toggle_fs)
 
     def search(self, event=None):
         # time the search
